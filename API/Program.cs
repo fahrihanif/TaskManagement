@@ -1,9 +1,11 @@
 using API.Contracts;
+using API.Data;
 using API.Exceptions;
 using API.Extensions;
 using API.Middlewares;
 using API.Repositories;
 using API.Services;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 
 // Bootstrap Serilog from appsettings.json
@@ -31,9 +33,16 @@ try
     // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
+    
+    // Db Context
+    builder.Services.AddDbContext<AppDbContext>(options =>
+                                                    options.UseSqlServer(
+                                                        builder.Configuration.GetConnectionString("DefaultConnection")));
 
     // Register Repositories
     builder.Services.AddScoped<ITaskRepository, TaskRepository>();
+    builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+    builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
     
     // Middlewares
     builder.Services.AddScoped<RequestLoggingMiddleware>();
@@ -66,7 +75,7 @@ try
 
     app.Run();
 }
-catch (Exception ex)
+catch (Exception ex) when (ex.GetType().Name is not "HostAbortedException" and not "StopTheHostException")
 {
     Log.Fatal(ex, "Application terminated unexpectedly.");
 }

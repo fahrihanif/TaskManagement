@@ -1,6 +1,8 @@
+using API.Entities;
+
 namespace API.Contracts;
 
-public interface ITaskRepository
+public interface ITaskRepository : IRepository<TaskItem>
 {
-    IEnumerable<string> GetAll();
+    
 }
