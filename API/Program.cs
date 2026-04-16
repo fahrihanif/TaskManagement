@@ -1,3 +1,4 @@
+using API.Behaviours;
 using API.Contracts;
 using API.Data;
 using API.Exceptions;
@@ -5,6 +6,7 @@ using API.Extensions;
 using API.Middlewares;
 using API.Repositories;
 using API.Services;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 
@@ -48,6 +50,18 @@ try
     builder.Services.AddScoped<RequestLoggingMiddleware>();
     builder.Services.AddProblemDetails();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+    
+    // Register all validators from the assembly automatically
+    builder.Services.AddValidatorsFromAssembly(typeof(Program).Assembly);
+
+    // Register MediatR with both pipeline behaviors
+    // Order matters: LoggingBehavior wraps ValidationBehavior wraps the handler
+    builder.Services.AddMediatR(cfg =>
+    {
+        cfg.RegisterServicesFromAssembly(typeof(Program).Assembly);
+        cfg.AddOpenBehavior(typeof(LoggingBehavior<,>));
+        cfg.AddOpenBehavior(typeof(ValidationBehavior<,>));
+    });
 
     // Lifetime demonstration services
     builder.Services.AddSingleton<SingletonDemoService>();

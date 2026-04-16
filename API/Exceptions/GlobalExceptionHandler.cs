@@ -28,18 +28,19 @@ public class GlobalExceptionHandler : IExceptionHandler
             _                           => (StatusCodes.Status500InternalServerError,  "Internal Server Error")
         };
 
-        var detail = exception is ValidationException ve
-            ? string.Join("; ", ve.Errors.SelectMany(e => e.Value))
-            : exception.Message;
-
         var problemDetails = new ProblemDetails
         {
             Type     = $"https://httpstatuses.io/{statusCode}",
             Title    = title,
             Status   = statusCode,
-            Detail   = detail,
+            Detail   = exception.Message,
             Instance = httpContext.Request.Path
         };
+        
+        if (exception is ValidationException ve)
+        {
+            problemDetails.Extensions["errors"] = ve.Errors;
+        }
 
         problemDetails.Extensions["traceId"] = httpContext.TraceIdentifier;
 
